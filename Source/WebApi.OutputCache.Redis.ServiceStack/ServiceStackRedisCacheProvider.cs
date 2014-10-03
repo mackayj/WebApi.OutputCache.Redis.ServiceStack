@@ -12,6 +12,7 @@ namespace WebApi.OutputCache.Redis.ServiceStack
 	{
 		private readonly IRedisClient _client;
 
+
 		public ServiceStackRedisCacheProvider(string host)
 		{
 			_client = new RedisClient(host);
@@ -44,12 +45,8 @@ namespace WebApi.OutputCache.Redis.ServiceStack
 
 		public object Get(string key)
 		{
-			return Get<object>(key);
-		}
-
-		public byte[] GetData(string key)
-		{
-			return Get<byte[]>(key);
+			var result = _client.Get<object>(key);
+			return result;
 		}
 
 		public void Remove(string key)
@@ -67,7 +64,9 @@ namespace WebApi.OutputCache.Redis.ServiceStack
 			// Don't store the dependsOnKey because we store it as a list later!
 			if (Equals(o, "")) return;
 
-			var primaryAdded = _client.Add(key, o, expiration.LocalDateTime);
+			var expireTime = expiration.Subtract(DateTimeOffset.Now);
+
+			var primaryAdded = _client.Add(key, o, expireTime);
 
 			if (dependsOnKey != null && primaryAdded)
 			{
